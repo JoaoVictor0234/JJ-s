@@ -1,14 +1,17 @@
 <?php
 session_start();
-include "conexao.php";
+include('conexao.php');
+$sql = "SELECT * FROM produtos";
+$result  = $mysqli->query($sql);
 
 // Recebe o ID do produto via GET
-$id_produto = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$id_produto = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$nome_cliente = $_SESSION['nome'];
 
 // Verifica se o ID do produto foi fornecido
 if (!$id_produto) {
-    echo "Produto inválido.";
-    exit();
+  echo "Produto inválido.";
+  exit();
 }
 
 // Consulta o banco para buscar as informações do produto
@@ -16,26 +19,10 @@ $sql = "SELECT * FROM produtos WHERE id = $id_produto";
 $result = $mysqli->query($sql);
 
 if ($result->num_rows > 0) {
-    $produto = $result->fetch_assoc();
+  $produto = $result->fetch_assoc();
 } else {
-    echo "Produto não encontrado.";
-    exit();
-}
-
-// Adicionar o produto ao carrinho
-if (isset($_POST['adicionar'])) {
-    $quantidade = isset($_POST['quantidade']) ? (int)$_POST['quantidade'] : 1;
-
-    // Verifica se o produto já está no carrinho
-    if (isset($_SESSION['carrinho'][$id_produto])) {
-        $_SESSION['carrinho'][$id_produto] += $quantidade;
-    } else {
-        $_SESSION['carrinho'][$id_produto] = $quantidade;
-    }
-
-    // Redireciona para o carrinho
-    header("Location: carrinho.php");
-    exit();
+  echo "Produto não encontrado.";
+  exit();
 }
 ?>
 
@@ -51,41 +38,32 @@ if (isset($_POST['adicionar'])) {
 <body>
   <header class="head">
     <div class="logo">
-      <a href="index.html"><img src="logo.png" alt="JJ'S" id="imglogo"></a>
+      <a href="inicio.php"><img src="logo.png" alt="JJ'S" id="imglogo"></a>
     </div>
     <div class="login">
       <?php
-        if (isset($_SESSION['usuario_id'])) {
-            echo "<a href='perfil.php'>" . $_SESSION['usuario_nome'] . "</a>";
-        } else {
-            echo "<a href='login.php'>Login</a>";
-        }
+      if (isset($_SESSION['id'])) {
+        echo "<a href='login.php'>" . $_SESSION['nome'] . "</a>";
+      } else {
+        echo "<a href='login.php'>Login</a>";
+      }
       ?>
-      <a href="carrinho.php" id="cart">
-        <img src="carrinho-icon.png" alt="Carrinho">
-        <span id="cart-count">
-          <?php echo isset($_SESSION['carrinho']) ? array_sum($_SESSION['carrinho']) : 0; ?>
-        </span>
-      </a>
     </div>
   </header>
 
   <main class="product-container">
-    <div class="product-image">
-      <img src="imagens/<?php echo $produto['imagem']; ?>" alt="Imagem do Produto">
-    </div>
-    <div class="product-details">
-      <h2><?php echo $produto['nome']; ?></h2>
-      <p><?php echo $produto['quantidade']; ?></p>
-      <p class="price">R$<?php echo number_format($produto['valor'], 2, ',', '.'); ?></p>
-      
-      <!-- Formulário para adicionar ao carrinho -->
-      <a href="carrinho.php?acao=add&id=<?php echo $produto['id']; ?>">
-        <label for="quantidade">Quantidade:</label>
-        <input type="number" name="quantidade" value="1" min="1">
-        <button type="submit" name="adicionar" class="button">Adicionar ao Carrinho</button>
-      </a>
-    </div>
+    <form action="final.php" method="GET">
+      <div class="product-image">
+        <img src="imagens/<?php echo $produto['imagem']; ?>" alt="Imagem do Produto">
+      </div>
+      <div class="product-details">
+        <h2><?php echo $produto['nome']; ?></h2>
+        <p><?php echo $produto['quantidade']; ?> em estoque</p>
+        <p class="price">R$<?php echo number_format($produto['valor'], 2, ',', '.'); ?></p>
+        <input type="number" name="quantidadeCompra" id="quantidadeCompra" style="background-color: black; color: white; padding: 12px; border: 0.2rem solid #f29c38; border-radius: 50px;" placeholder="Quantidade" min="1">
+        <input type="hidden" name="id_produto" value="<?php echo $produto['id']; ?>">
+        <button type="submit" name="adicionar" class="button">COMPRAR</button>
+    </form>
   </main>
 
   <div class="product-full-description">
@@ -94,7 +72,7 @@ if (isset($_POST['adicionar'])) {
   </div>
 
   <footer class="main-footer">
-    <a href="index.html"><img src="logo.png" alt="JJ'S" class="img-footer"></a>
+    <a href="inicio.php"><img src="logo.png" alt="JJ'S" class="img-footer"></a>
     <h1>JJ'S</h1>
     <h3>O DE HOJE TÁ PAGO</h3>
   </footer>
